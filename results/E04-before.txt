@@ -1,0 +1,16 @@
+Question:
+How many business days does a laptop replacement take?
+
+Answer:
+Grounded response based on retrieved context:
+[hb-01-chunk-0] Laptop replacement: broken, lost or stolen laptops can be replaced. After manager approval, a replacement laptop is set up by IT staff with
+[hb-01-chunk-2] iness days. Report lost or stolen devices to security first. Request a replacement laptop in IT portal under Hardware. Accessories such as m
+
+Refused: False
+Citations:
+  hb-01-chunk-0: Equipment replacement (version 2026, current)
+  hb-01-chunk-2: Equipment replacement (version 2026, current)
+
+Retrieved:
+  0.2174  hb-01-chunk-0: Laptop replacement: broken, lost or stolen laptops can be replaced. After manager approval, a replacement laptop is set up by IT staff with
+  0.1739  hb-01-chunk-2: iness days. Report lost or stolen devices to security first. Request a replacement laptop in IT portal under Hardware. Accessories such as m
