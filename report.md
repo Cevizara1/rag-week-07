@@ -1,7 +1,7 @@
 # Nedelja 7: jedno kontrolisano poboljšanje RAG sistema
 
-**Par:** Aleksa Cevizović, _(ime drugog člana)_
-**Demonstraciju vodi:** _(ime)_
+**Par:** Tim 6 — Aleksa Cevizovic i Anja Hubac
+**Demonstraciju vodi:** Aleksa Cevizovic
 **Izabrana promena:** M1, sečenje po rečenicama
 
 ---
@@ -191,10 +191,22 @@ Odgovor i citat izgledaju onako kako eval tvrdi: cela rečenica sa „5 business
 3. **Popravka E04 je tesna:** 0.2069 prema 0.2000. Mala promena u tekstu ili pitanju mogla bi da vrati chunk bez činjenice na prvo mesto. Uzrok je to što ocena deli broj poklapanja dužinom chunk-a, pa duža rečenica sa odgovorom dobija nižu ocenu.
 4. **Eval meri samo jedan deo pitanja E09.** Proverava se samo „5 business days”, ne i to da li je pokriveno „gde”. To smo ovde proverili ručno.
 5. **Bez overlapa** informacija koja zavisi od dve susedne rečenice sada može da završi u dva odvojena chunk-a. Eval skup ne sadrži takvo pitanje, pa ovaj rizik nije izmeren.
+6. **„Popravljeno u evalu” ne znači „popravljeno uopšte”.** Uz eval smo ručno postavili nekoliko preformulisanih pitanja sa istim očekivanim odgovorom. Ova provera nije deo eval skupa i ne ulazi u metrike. Za svako pitanje gledamo da li citati sadrže činjenicu, i to pre (`chars`) i posle (`sentences`):
+
+   | Pitanje | Pre | Posle |
+   |---|---|---|
+   | How long does a laptop replacement take? | nema „5 business days” | nema „5 business days” |
+   | How long does it take to replace a broken laptop? | nema | nema |
+   | When will my replacement laptop be ready? | nema | nema |
+   | How many remote days per week are allowed? | ima „3 days” (i stara verzija) | **nema, citira samo staru verziju (2 dana)** |
+   | Can I work from home 3 days? | nema | ima „3 days” (i stara verzija) |
+   | What is the remote work policy? | nema | ima „3 days” (i stara verzija) |
+
+   E04 prolazi uglavnom zato što pitanje sadrži iste reči kao odgovor („business days”). Isto pitanje bez tih reči („How long does a laptop replacement take?”) i dalje promašuje. Pored toga, jedno pitanje o radu od kuće koje je ranije pronalazilo novu verziju sada citira samo staru. To je regresija van eval skupa. Promena je rešila presečenu rečenicu, ali ne i osnovnu slabost leksičke pretrage: nije svesna verzije i ne razume formulacije bez istih reči. Ovo je primer zašto eval skup od 12 pitanja ne garantuje kvalitet na svim pitanjima.
 
 ## 9. Komentar para
 
-_(komentar drugog para na tri pitanja iz zadatka)_
+Pregled para nije održan. Discord nit „Nedelja 7: pregled para” nije bila otvorena, a rok (ponedeljak, 19. oktobar, 20:00) je istekao, pa nismo dobili komentar drugog para niti smo mi pregledali tuđi izveštaj. Ako tutor organizuje pregled naknadno, komentar ćemo dodati ovde.
 
 ## 10. Korišćenje AI asistenta
 
@@ -215,8 +227,8 @@ Kako smo proverili:
 
 Tvrdnje u izveštaju oslanjaju se samo na sačuvane izlaze u `results/`.
 
-_(dopunite svojim rečima šta ste sami proverili)_
+Asistenta smo koristili i da bismo bolje razumeli ceo sistem i kompromise svake opcije iz menija. Asistent je predložio više rešenja, a mi smo izabrali M1. U pregledu je M1 dao najviše prolaza bez regresija, i jedini je ciljao propuste koje smo dokumentovali (E04 i E09). Stvarno ciljani problem je jedan, presečena rečenica. Popravka E06 je sporedan efekat, kako je opisano u sekciji 8.
 
 ## 11. Doprinos članova
 
-_(ko je šta uradio)_
+Ceo zadatak smo Aleksa Cevizovic i Anja Hubac radili zajedno, na zajedničkom pozivu: početno merenje, analizu propusta, izbor promene, pregled specifikacije i diff-a, merenje posle promene i izveštaj. Demonstraciju na Sesiji 2 vodi Aleksa.
