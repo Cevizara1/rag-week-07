@@ -92,23 +92,105 @@ _Napisano i commit-ovano pre izmene koda._
 
 ## 4. Primenjena promena
 
-_(popunjava se posle izmene: opis i `git diff`)_
+Commit `d54bd75 M1: sentence-aware chunking`. Ceo diff je u `results/m1.diff`.
+
+- `src/chunking.py`: implementirana je funkcija `split_text_by_sentences`. Tekst se deli na rečenice posle `.`, `!` ili `?`, a rečenice se pakuju u chunk dok ne pređu 140 znakova. Rečenica koja ne staje počinje novi chunk, a rečenica duža od 140 znakova ostaje cela.
+- `src/config.py`: `CHUNK_STRATEGY = "chars"` je promenjeno u `"sentences"`. Ništa drugo u konfiguraciji nije menjano.
+- `tests/test_chunking.py`: dodata su tri testa za novo ponašanje: cele rečenice, pakovanje kratkih rečenica i duga rečenica kao zaseban chunk.
+
+Sve tri izmene služe jednoj nameri: da se tekst ne seče usred rečenice. Testovi samo proveravaju da funkcija radi ono što specifikacija kaže.
+
+Kako sada izgleda dokument hb-01:
+
+| Chunk | Pre (140 znakova, overlap 30) | Posle (po rečenicama) |
+|---|---|---|
+| 0 | „Laptop replacement: … set up by IT staff with” | „Laptop replacement: broken, lost or stolen laptops can be replaced.” |
+| 1 | „op is set up by IT staff … 5 business days. Report lost or sto” | „After manager approval, … handover can take up to 5 business days.” (163 znaka, cela rečenica) |
+| 2 | „iness days. Report lost or stolen devices … such as m” | „Report lost or stolen devices to security first. Request a replacement laptop in IT portal under Hardware.” |
+| 3 | „ardware. Accessories such as mouse …” | „Accessories such as mouse or headset are ordered through that same form.” |
 
 ## 5. Ponovno merenje
 
-_(tabela iz `results/after.json`)_
+Ista komanda: `python -m src.eval_runner --out results/after.json`. Testovi: **21 passed**.
+
+```
+ID   Category                 Expected Got     Hit  Fact  CitPrec Pass
+----------------------------------------------------------------------
+E01  supported                answer   answer  yes  yes   0.50    PASS
+E02  supported                answer   answer  yes  yes   0.50    PASS
+E03  supported                answer   answer  yes  yes   1.00    PASS
+E04  chunk-boundary           answer   answer  yes  yes   1.00    PASS
+E05  paraphrase               answer   answer  no   no    0.00    FAIL
+E06  versioned                answer   answer  yes  yes   0.50    PASS
+E07  supported                answer   answer  yes  yes   1.00    PASS
+E08  supported                answer   answer  yes  yes   0.50    PASS
+E09  chunk-boundary           answer   answer  yes  yes   1.00    PASS
+E10  unsupported              refuse   answer  -    -     0.00    FAIL
+E11  unsupported-near-domain  refuse   answer  -    -     0.00    FAIL
+E12  unsupported              refuse   refuse  -    -     -       PASS
+
+Passed: 9/12
+Behaviour accuracy: 0.83
+Retrieval hit rate (supported): 0.89
+Mean citation precision (answered): 0.55
+eval_set_sha256: afe46db1e75a0b85bb5c9a93b6763e3b96e5cd7b289e12da6d2671e4d8650064
+```
 
 ## 6. Poređenje
 
-_(izlaz `eval_compare`)_
+`python -m src.eval_compare results/before.json results/after.json`:
+
+```
+Fixed (fail -> pass): E04, E06, E09
+Regressed (pass -> fail): none
+Unchanged: E01, E02, E03, E05, E07, E08, E10, E11, E12
+
+Summary:
+  passed: 6 -> 9 (+3)
+  total: 12 -> 12 (+0)
+  behaviour_accuracy: 0.8333 -> 0.8333 (+0.0)
+  retrieval_hit_rate: 0.7778 -> 0.8889 (+0.1111)
+  mean_citation_precision: 0.4545 -> 0.5455 (+0.091)
+
+Changed settings:
+  CHUNK_STRATEGY: 'chars' -> 'sentences'
+```
+
+Otisak eval skupa je isti pre i posle. Promenjeno je samo jedno podešavanje i alat ne prijavljuje upozorenje.
 
 ## 7. Ručna provera kroz CLI
 
-_(E04 posle promene: odgovor i citat)_
+`python -m src.cli --question "How many business days does a laptop replacement take?" --show-retrieved` (ceo izlaz je u `results/E04-after.txt`):
+
+```
+Citations:
+  hb-01-chunk-1: Equipment replacement (version 2026, current)
+  hb-01-chunk-0: Equipment replacement (version 2026, current)
+
+Retrieved:
+  0.2069  hb-01-chunk-1: After manager approval, a replacement laptop is set up by IT staff with your files, accounts, email and access rights, and handover can take up to 5 business days.
+  0.2000  hb-01-chunk-0: Laptop replacement: broken, lost or stolen laptops can be replaced.
+```
+
+Odgovor i citat izgledaju onako kako eval tvrdi: cela rečenica sa „5 business days” je na prvom mestu i citirana je.
 
 ## 8. Zaključak, regresije i preostala ograničenja
 
-_(šta se popravilo, šta se pokvarilo, šta ostaje slabo)_
+**Hipoteza je potvrđena.** E04 i E09 su prešli u PASS zato što rečenica sa odgovorom više nije presečena. Kod E09 je efekat čak bolji od očekivanog. Citirana su dva chunk-a koja zajedno pokrivaju oba dela pitanja: „gde” („Request a replacement laptop in IT portal under Hardware”) i „koliko traje” („5 business days”).
+
+**Regresija nema.** Ipak, promena je uticala i na pitanja koja nismo ciljali, jer su se promenile dužine svih chunk-ova:
+
+- **E06 je prošao, ali ne iz pravog razloga.** Nova politika (2026, „3 days”) sada je na prvom mestu, jer je njena prva rečenica ostala sama u kratkom chunk-u i dobila višu ocenu. Stara politika (2024, „2 days”) je i dalje citirana kao druga. Korisnik u odgovoru vidi oba broja. Eval to računa kao prolaz jer je preciznost citata tačno 0.50, koliko je minimum. Uzrok, nepoštovanje verzije dokumenta, nije rešen. To bi rešila promena M5.
+- **E03 je bolji:** preciznost citata je porasla sa 0.50 na 1.00, jer su oba citata sada iz dokumenta o budžetu za obuku.
+- **E01, E02 i E08 i dalje citiraju jedan nepovezan chunk kao dopunu.** Kod E01 se dopuna promenila: umesto stare citira se nova politika rada od kuće. Prolaze samo zato što je preciznost 0.50.
+
+**Preostala ograničenja:**
+
+1. **E05 (parafraza)** i dalje pada. „Notebook computer” nema nijednu zajedničku reč sa „laptop”, a leksička pretraga ne razume sinonime. Nijedna promena iz menija ovo ne rešava. Bila bi potrebna pretraga po značenju (embeddings) ili preformulisanje pitanja.
+2. **E10 i E11** i dalje dobijaju odgovor umesto odbijanja. Prag odbijanja (0.02) je prenizak za E10 (najviša ocena 0.077). E11 („parental leave policy”) ima višu ocenu (0.222) od nekih ispravnih odgovora, jer deli reči „leave” i „policy” sa politikom godišnjeg odmora. Zato samo podizanje praga ne može da ga reši bez novog pogrešnog odbijanja.
+3. **Popravka E04 je tesna:** 0.2069 prema 0.2000. Mala promena u tekstu ili pitanju mogla bi da vrati chunk bez činjenice na prvo mesto. Uzrok je to što ocena deli broj poklapanja dužinom chunk-a, pa duža rečenica sa odgovorom dobija nižu ocenu.
+4. **Eval meri samo jedan deo pitanja E09.** Proverava se samo „5 business days”, ne i to da li je pokriveno „gde”. To smo ovde proverili ručno.
+5. **Bez overlapa** informacija koja zavisi od dve susedne rečenice sada može da završi u dva odvojena chunk-a. Eval skup ne sadrži takvo pitanje, pa ovaj rizik nije izmeren.
 
 ## 9. Komentar para
 
@@ -116,7 +198,24 @@ _(komentar drugog para na tri pitanja iz zadatka)_
 
 ## 10. Korišćenje AI asistenta
 
-_(za šta smo koristili asistenta i kako smo proverili ono što je predložio)_
+Koristili smo Claude Code za:
+
+- objašnjenje koda projekta i zadatka;
+- pregled svih opcija iz menija u odvojenoj privremenoj kopiji projekta, da bismo izabrali promenu;
+- nacrt opisa propusta, specifikacije i ovog izveštaja;
+- implementaciju funkcije `split_text_by_sentences` i testova.
+
+Kako smo proverili:
+
+- Pregled opcija iz privremene kopije nismo koristili kao dokaz.
+- Specifikaciju smo pročitali i commit-ovali pre izmene koda.
+- Diff smo pregledali pre commit-a.
+- Testove, eval pre i posle i poređenje pokrenuli smo u samom projektu, istim komandama.
+- Odgovor za E04 posle promene proverili smo ručno kroz CLI.
+
+Tvrdnje u izveštaju oslanjaju se samo na sačuvane izlaze u `results/`.
+
+_(dopunite svojim rečima šta ste sami proverili)_
 
 ## 11. Doprinos članova
 

@@ -1,0 +1,16 @@
+Question:
+How many business days does a laptop replacement take?
+
+Answer:
+Grounded response based on retrieved context:
+[hb-01-chunk-1] After manager approval, a replacement laptop is set up by IT staff with your files, accounts, email and access rights, and handover can take up to 5 business days.
+[hb-01-chunk-0] Laptop replacement: broken, lost or stolen laptops can be replaced.
+
+Refused: False
+Citations:
+  hb-01-chunk-1: Equipment replacement (version 2026, current)
+  hb-01-chunk-0: Equipment replacement (version 2026, current)
+
+Retrieved:
+  0.2069  hb-01-chunk-1: After manager approval, a replacement laptop is set up by IT staff with your files, accounts, email and access rights, and handover can take up to 5 business days.
+  0.2000  hb-01-chunk-0: Laptop replacement: broken, lost or stolen laptops can be replaced.

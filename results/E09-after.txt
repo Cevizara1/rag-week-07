@@ -1,0 +1,16 @@
+Question:
+Where do I request a replacement laptop and how long does it take?
+
+Answer:
+Grounded response based on retrieved context:
+[hb-01-chunk-2] Report lost or stolen devices to security first. Request a replacement laptop in IT portal under Hardware.
+[hb-01-chunk-1] After manager approval, a replacement laptop is set up by IT staff with your files, accounts, email and access rights, and handover can take up to 5 business days.
+
+Refused: False
+Citations:
+  hb-01-chunk-2: Equipment replacement (version 2026, current)
+  hb-01-chunk-1: Equipment replacement (version 2026, current)
+
+Retrieved:
+  0.2941  hb-01-chunk-2: Report lost or stolen devices to security first. Request a replacement laptop in IT portal under Hardware.
+  0.2414  hb-01-chunk-1: After manager approval, a replacement laptop is set up by IT staff with your files, accounts, email and access rights, and handover can take up to 5 business days.

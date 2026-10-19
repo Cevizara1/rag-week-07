@@ -1,0 +1,97 @@
+diff --git a/src/chunking.py b/src/chunking.py
+index 5ae53cf..201145e 100644
+--- a/src/chunking.py
++++ b/src/chunking.py
+@@ -1,9 +1,13 @@
+ from dataclasses import dataclass
++import re
+ 
+ from . import config
+ from .corpus import Document
+ 
+ 
++SENTENCE_END_RE = re.compile(r"(?<=[.!?])\s+")
++
++
+ @dataclass(frozen=True)
+ class Chunk:
+     chunk_id: str
+@@ -43,7 +47,28 @@ def split_text_with_overlap(text: str, chunk_size: int = 140, overlap: int = 30)
+ 
+ 
+ def split_text_by_sentences(text: str, chunk_size: int = 140) -> list[str]:
+-    raise NotImplementedError('CHUNK_STRATEGY = "sentences" is not implemented yet.')
++    if chunk_size <= 0:
++        raise ValueError("chunk_size must be > 0")
++
++    cleaned = " ".join(text.split())
++    if not cleaned:
++        return []
++
++    sentences = SENTENCE_END_RE.split(cleaned)
++    chunks: list[str] = []
++    current = ""
++
++    for sentence in sentences:
++        if current and len(current) + 1 + len(sentence) > chunk_size:
++            chunks.append(current)
++            current = sentence
++        else:
++            current = f"{current} {sentence}" if current else sentence
++
++    if current:
++        chunks.append(current)
++
++    return chunks
+ 
+ 
+ def split_text(text: str) -> list[str]:
+diff --git a/src/config.py b/src/config.py
+index 1e4e222..0b827d9 100644
+--- a/src/config.py
++++ b/src/config.py
+@@ -4,7 +4,7 @@ The eval runner records every value in this module in its JSON output.
+ """
+ 
+ # Chunking
+-CHUNK_STRATEGY = "chars"  # "chars" or "sentences"
++CHUNK_STRATEGY = "sentences"  # "chars" or "sentences"
+ CHUNK_SIZE = 140
+ CHUNK_OVERLAP = 30
+ 
+diff --git a/tests/test_chunking.py b/tests/test_chunking.py
+index 3af775f..336307c 100644
+--- a/tests/test_chunking.py
++++ b/tests/test_chunking.py
+@@ -1,6 +1,6 @@
+ import pytest
+ 
+-from src.chunking import build_chunks, split_text_with_overlap
++from src.chunking import build_chunks, split_text_by_sentences, split_text_with_overlap
+ from src.corpus import load_corpus
+ 
+ 
+@@ -15,6 +15,23 @@ def test_split_text_with_overlap_rejects_invalid_overlap() -> None:
+         split_text_with_overlap("abc", chunk_size=10, overlap=10)
+ 
+ 
++def test_split_text_by_sentences_keeps_whole_sentences() -> None:
++    text = "One two. Three four five. Six."
++    chunks = split_text_by_sentences(text, chunk_size=20)
++    assert chunks == ["One two.", "Three four five.", "Six."]
++
++
++def test_split_text_by_sentences_packs_short_sentences_together() -> None:
++    chunks = split_text_by_sentences("A b. C d. E f.", chunk_size=100)
++    assert chunks == ["A b. C d. E f."]
++
++
++def test_split_text_by_sentences_keeps_long_sentence_as_own_chunk() -> None:
++    long_sentence = "This sentence is clearly longer than the tiny limit."
++    chunks = split_text_by_sentences(f"Short. {long_sentence} End.", chunk_size=20)
++    assert chunks == ["Short.", long_sentence, "End."]
++
++
+ def test_build_chunks_uses_stable_ids_and_keeps_metadata() -> None:
+     chunks = build_chunks(load_corpus())
+     ids = [chunk.chunk_id for chunk in chunks]

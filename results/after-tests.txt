@@ -1,0 +1,13 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.5, pytest-8.3.3, pluggy-1.7.0
+rootdir: C:\Users\ac200\OneDrive\SITA-AIBOOTCAMP\week7\rag-week-7-weak-checkpoint\rag-week-7-weak-checkpoint
+collected 21 items
+
+tests\test_chunking.py ......                                            [ 28%]
+tests\test_eval_compare.py ....                                          [ 47%]
+tests\test_eval_metrics.py ....                                          [ 66%]
+tests\test_eval_set.py ..                                                [ 76%]
+tests\test_rag.py ..                                                     [ 85%]
+tests\test_retrieval.py ...                                              [100%]
+
+============================= 21 passed in 0.38s ==============================

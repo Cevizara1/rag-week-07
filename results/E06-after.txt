@@ -1,0 +1,16 @@
+Question:
+How many days per week can I work remotely?
+
+Answer:
+Grounded response based on retrieved context:
+[hb-03-chunk-0] Remote work: employees can work remotely up to 3 days per week.
+[hb-02-chunk-0] Remote work: employees can work remotely up to 2 days per week. Remote days per week are agreed with your team lead.
+
+Refused: False
+Citations:
+  hb-03-chunk-0: Remote work policy (version 2026, current)
+  hb-02-chunk-0: Remote work policy (version 2024, superseded)
+
+Retrieved:
+  0.5833  hb-03-chunk-0: Remote work: employees can work remotely up to 3 days per week.
+  0.4545  hb-02-chunk-0: Remote work: employees can work remotely up to 2 days per week. Remote days per week are agreed with your team lead.
