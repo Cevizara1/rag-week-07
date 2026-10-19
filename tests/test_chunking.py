@@ -1,6 +1,6 @@
 import pytest
 
-from src.chunking import build_chunks, split_text_with_overlap
+from src.chunking import build_chunks, split_text_by_sentences, split_text_with_overlap
 from src.corpus import load_corpus
 
 
@@ -13,6 +13,23 @@ def test_split_text_with_overlap_returns_multiple_chunks() -> None:
 def test_split_text_with_overlap_rejects_invalid_overlap() -> None:
     with pytest.raises(ValueError):
         split_text_with_overlap("abc", chunk_size=10, overlap=10)
+
+
+def test_split_text_by_sentences_keeps_whole_sentences() -> None:
+    text = "One two. Three four five. Six."
+    chunks = split_text_by_sentences(text, chunk_size=20)
+    assert chunks == ["One two.", "Three four five.", "Six."]
+
+
+def test_split_text_by_sentences_packs_short_sentences_together() -> None:
+    chunks = split_text_by_sentences("A b. C d. E f.", chunk_size=100)
+    assert chunks == ["A b. C d. E f."]
+
+
+def test_split_text_by_sentences_keeps_long_sentence_as_own_chunk() -> None:
+    long_sentence = "This sentence is clearly longer than the tiny limit."
+    chunks = split_text_by_sentences(f"Short. {long_sentence} End.", chunk_size=20)
+    assert chunks == ["Short.", long_sentence, "End."]
 
 
 def test_build_chunks_uses_stable_ids_and_keeps_metadata() -> None:
